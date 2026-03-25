@@ -59,6 +59,36 @@ sealed class Screen(
         selectedIcon = Icons.Filled.MenuBook,
         unselectedIcon = Icons.Outlined.MenuBook,
     )
+    data object ListingDetail : Screen(
+        route = "listing_detail/{listingId}",
+        title = "Listing Details",
+        selectedIcon = Icons.Filled.Info,
+        unselectedIcon = Icons.Outlined.Info,
+    ) {
+        fun createRoute(listingId: Long) = "listing_detail/$listingId"
+    }
+
+    data object Cart : Screen(
+        route = "cart",
+        title = "Cart",
+        selectedIcon = Icons.Filled.ShoppingCart,
+        unselectedIcon = Icons.Outlined.ShoppingCart,
+    )
+    
+    data object Checkout : Screen(
+        route = "checkout",
+        title = "Checkout",
+        selectedIcon = Icons.Filled.Payment,
+        unselectedIcon = Icons.Outlined.Payment,
+    )
+    
+    data object Orders : Screen(
+        route = "orders",
+        title = "My Orders",
+        selectedIcon = Icons.Filled.ListAlt,
+        unselectedIcon = Icons.Outlined.ListAlt,
+    )
+
     data object Settings : Screen(
         route = "settings",
         title = "Settings",

@@ -159,3 +159,41 @@ data class MarketTransaction(
     @SerialName("escrow_status") val escrowStatus: String = "INITIATED",
     @SerialName("transaction_date") val transactionDate: String? = null,
 )
+
+@Serializable
+data class CartItem(
+    @SerialName("cart_id") val cartId: Long = 0,
+    @SerialName("user_id") val userId: String,
+    @SerialName("listing_id") val listingId: Long,
+    val quantity: Double,
+    @SerialName("added_at") val addedAt: String? = null,
+)
+
+@Serializable
+data class CartItemWithDetails(
+    val cartItem: CartItem,
+    val listing: Listing,
+    val cropName: String
+)
+
+@Serializable
+data class Order(
+    @SerialName("order_id") val orderId: Long = 0,
+    @SerialName("buyer_user_id") val buyerUserId: String,
+    @SerialName("total_amount") val totalAmount: Double,
+    @SerialName("payment_status") val paymentStatus: String = "PENDING",
+    @SerialName("order_status") val orderStatus: String = "PLACED",
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+data class OrderItem(
+    @SerialName("item_id") val itemId: Long = 0,
+    @SerialName("order_id") val orderId: Long,
+    @SerialName("listing_id") val listingId: Long,
+    val quantity: Double,
+    @SerialName("price_per_unit") val pricePerUnit: Double,
+    @SerialName("created_at") val createdAt: String? = null,
+)
+

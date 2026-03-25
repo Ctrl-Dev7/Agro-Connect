@@ -278,4 +278,110 @@ object AgroRepository {
             false
         }
     }
+
+    // ─── Cart ───
+    suspend fun addToCart(cartItem: com.agroconnect.models.CartItem): Boolean {
+        return try {
+            client.postgrest["m_cart_items"].insert(cartItem)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "addToCart failed", e)
+            false
+        }
+    }
+
+    suspend fun getCartItems(userId: String): List<com.agroconnect.models.CartItemWithDetails> {
+        return try {
+            // First fetch the raw cart items
+            val cartItems = client.postgrest["m_cart_items"]
+                .select {
+                    filter { eq("user_id", userId) }
+                    order("added_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+                }
+                .decodeList<com.agroconnect.models.CartItem>()
+                
+            if (cartItems.isEmpty()) return emptyList()
+            
+            // Then fetch the associated listings
+            val listingIds = cartItems.map { it.listingId }
+            val listings = client.postgrest["m_listings"]
+                .select { filter { isIn("listing_id", listingIds) } }
+                .decodeList<Listing>()
+                .associateBy { it.listingId }
+                
+            val crops = getCrops().associateBy { it.cropId }
+            
+            cartItems.mapNotNull { item ->
+                val listing = listings[item.listingId] ?: return@mapNotNull null
+                val cropName = crops[listing.cropId]?.cropNameEn ?: "Equipment"
+                com.agroconnect.models.CartItemWithDetails(item, listing, cropName)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getCartItems failed", e)
+            emptyList()
+        }
+    }
+
+    suspend fun updateCartQuantity(cartId: Long, newQuantity: Double) {
+        try {
+            client.postgrest["m_cart_items"].update({
+                set("quantity", newQuantity)
+            }) {
+                filter { eq("cart_id", cartId) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateCartQuantity failed", e)
+        }
+    }
+
+    suspend fun removeFromCart(cartId: Long) {
+        try {
+            client.postgrest["m_cart_items"].delete {
+                filter { eq("cart_id", cartId) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "removeFromCart failed", e)
+        }
+    }
+
+    suspend fun clearCart(userId: String) {
+        try {
+            client.postgrest["m_cart_items"].delete {
+                filter { eq("user_id", userId) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "clearCart failed", e)
+        }
+    }
+
+    // ─── Orders ───
+    suspend fun createOrder(order: com.agroconnect.models.Order, items: List<com.agroconnect.models.OrderItem>): Boolean {
+        return try {
+            val placedOrder = client.postgrest["m_orders"]
+                .insert(order)
+                .decodeSingle<com.agroconnect.models.Order>()
+            
+            val orderItems = items.map { it.copy(orderId = placedOrder.orderId) }
+            
+            client.postgrest["m_order_items"].insert(orderItems)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "createOrder failed", e)
+            false
+        }
+    }
+
+    suspend fun getMyOrders(userId: String): List<com.agroconnect.models.Order> {
+         return try {
+            client.postgrest["m_orders"]
+                .select {
+                    filter { eq("buyer_user_id", userId) }
+                    order("created_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING)
+                }
+                .decodeList<com.agroconnect.models.Order>()
+        } catch (e: Exception) {
+            Log.e(TAG, "getMyOrders failed", e)
+            emptyList()
+        }
+    }
 }
