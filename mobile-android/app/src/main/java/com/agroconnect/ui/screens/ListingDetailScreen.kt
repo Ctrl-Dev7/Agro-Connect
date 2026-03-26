@@ -109,7 +109,7 @@ fun ListingDetailScreen(navController: NavController, listingId: Long) {
         Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Filled.Person, contentDescription = "Person icon", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.width(8.dp))
             Text("Seller: ${sellerName ?: "Unknown"}", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -173,7 +173,7 @@ fun ListingDetailScreen(navController: NavController, listingId: Long) {
                 if (addingToCart) {
                     CircularProgressIndicator(Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
-                    Icon(Icons.Filled.ShoppingCart, contentDescription = null)
+                    Icon(Icons.Filled.ShoppingCart, contentDescription = "ShoppingCart icon")
                     Spacer(Modifier.width(8.dp))
                     Text("Add 1 ${item.unitOfMeasure} to Cart", fontSize = MaterialTheme.typography.titleMedium.fontSize)
                 }

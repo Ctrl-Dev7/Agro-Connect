@@ -137,9 +137,7 @@ fun AdvisoriesScreen() {
                                         }
                                     }
                                 }
-                                Icon(
-                                    if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                                    contentDescription = null,
+                                Icon(if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = "ExpandMore icon",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }

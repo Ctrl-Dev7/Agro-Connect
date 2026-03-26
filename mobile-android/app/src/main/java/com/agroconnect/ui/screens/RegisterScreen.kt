@@ -189,7 +189,7 @@ fun RegisterScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(8.dp))
                 if (lat != null && lon != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Filled.LocationOn, contentDescription = "LocationOn icon", tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Captured: ${String.format("%.4f", lat)}, ${String.format("%.4f", lon)}", style = MaterialTheme.typography.bodyMedium)
                     }

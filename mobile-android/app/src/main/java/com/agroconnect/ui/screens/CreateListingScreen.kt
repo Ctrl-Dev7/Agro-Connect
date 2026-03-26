@@ -63,9 +63,7 @@ fun CreateListingScreen(navController: NavController) {
     if (success) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    Icons.Filled.CheckCircle,
-                    contentDescription = null,
+                Icon(Icons.Filled.CheckCircle, contentDescription = "CheckCircle icon",
                     modifier = Modifier.size(72.dp),
                     tint = Success,
                 )
@@ -256,7 +254,7 @@ fun CreateListingScreen(navController: NavController) {
                     strokeWidth = 2.dp,
                 )
             } else {
-                Icon(Icons.Filled.Publish, contentDescription = null)
+                Icon(Icons.Filled.Publish, contentDescription = "Publish icon")
                 Spacer(Modifier.width(8.dp))
                 Text("Publish Listing", fontWeight = FontWeight.Bold)
             }

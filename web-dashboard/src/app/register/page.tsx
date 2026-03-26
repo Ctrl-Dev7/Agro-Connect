@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
-import { Wheat, User, Phone, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Wheat, User, Phone, MapPin, Loader2, AlertCircle, Mail, Lock } from 'lucide-react';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -80,154 +80,174 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-earth-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-[url('/harvest-bg.png')] bg-cover bg-blend-overlay bg-black/60">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="bg-primary-600 p-3 rounded-xl shadow-lg shadow-primary-900/50">
-            <Wheat className="h-10 w-10 text-white" />
+    <div className="auth-container">
+      <div className="auth-card" style={{ maxWidth: 520, padding: '32px 32px' }}>
+        
+        <div className="auth-header" style={{ marginBottom: 24 }}>
+          <div className="auth-logo-box" style={{ width: 56, height: 56, marginBottom: 16 }}>
+            <Wheat size={28} />
           </div>
+          <h2 style={{ fontSize: '1.6rem' }}>Create an Account</h2>
+          <p>
+            Or <Link href="/login">sign in to your existing account</Link>
+          </p>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-          Create an Account
-        </h2>
-        <p className="mt-2 text-center text-sm text-earth-300">
-          Or{' '}
-          <Link href="/login" className="font-medium text-primary-400 hover:text-primary-300">
-            sign in to your existing account
-          </Link>
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="bg-white/10 backdrop-blur-xl py-8 px-4 shadow sm:rounded-2xl sm:px-10 border border-white/20">
-          
-          {error && (
-            <div className="mb-4 bg-red-500/10 border border-red-500/50 p-4 rounded-lg flex items-start">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-              <p className="text-sm text-red-100">{error}</p>
-            </div>
-          )}
+        {error && (
+          <div className="auth-error">
+            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: 2, color: '#EF5350' }} />
+            <span>{error}</span>
+          </div>
+        )}
 
-          <form className="space-y-6" onSubmit={handleRegister}>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-earth-100 mb-1">First Name</label>
+        <form onSubmit={handleRegister} className="auth-form">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="auth-input-group">
+              <label className="auth-label">First Name</label>
+              <div className="auth-input-wrapper">
+                <User className="auth-input-icon" size={18} />
                 <input
                   name="firstName" type="text" required
                   value={formData.firstName} onChange={handleInputChange}
-                  className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-earth-600 bg-earth-800/50 text-white rounded-lg py-2.5 px-3"
+                  className="auth-input"
                   placeholder="Ram"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-earth-100 mb-1">Last Name</label>
+            </div>
+            
+            <div className="auth-input-group">
+              <label className="auth-label">Last Name</label>
+              <div className="auth-input-wrapper">
+                <User className="auth-input-icon" size={18} />
                 <input
                   name="lastName" type="text" required
                   value={formData.lastName} onChange={handleInputChange}
-                  className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-earth-600 bg-earth-800/50 text-white rounded-lg py-2.5 px-3"
+                  className="auth-input"
                   placeholder="Kumar"
                 />
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-earth-100 mb-1">Email Address</label>
+          <div className="auth-input-group">
+            <label className="auth-label">Email Address</label>
+            <div className="auth-input-wrapper">
+              <Mail className="auth-input-icon" size={18} />
               <input
                 name="email" type="email" required
                 value={formData.email} onChange={handleInputChange}
-                className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-earth-600 bg-earth-800/50 text-white rounded-lg py-2.5 px-3"
+                className="auth-input"
                 placeholder="ram@example.com"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-earth-100 mb-1">Phone Number</label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Phone className="h-4 w-4 text-earth-400" />
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="auth-input-group">
+              <label className="auth-label">Phone Number</label>
+              <div className="auth-input-wrapper">
+                <Phone className="auth-input-icon" size={18} />
                 <input
                   name="phone" type="tel" required
                   value={formData.phone} onChange={handleInputChange}
-                  className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-earth-600 bg-earth-800/50 text-white rounded-lg py-2.5"
-                  placeholder="+91 9876543210"
+                  className="auth-input"
+                  placeholder="+91 987654321"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-earth-100 mb-1">Password</label>
-              <input
-                name="password" type="password" required minLength={6}
-                value={formData.password} onChange={handleInputChange}
-                className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-earth-600 bg-earth-800/50 text-white rounded-lg py-2.5 px-3"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <div className="border-t border-earth-700 pt-4">
-              <label className="block text-sm font-medium text-earth-100 mb-2">I am registering as a:</label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({...prev, userType: 'FARMER'}))}
-                  className={`flex items-center justify-center space-x-2 py-3 border rounded-lg transition-colors ${formData.userType === 'FARMER' ? 'bg-primary-600 border-primary-500 text-white' : 'bg-earth-800/50 border-earth-600 text-earth-300 hover:bg-earth-700'}`}
-                >
-                  <Wheat className="h-5 w-5" />
-                  <span>Farmer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({...prev, userType: 'BUYER'}))}
-                  className={`flex items-center justify-center space-x-2 py-3 border rounded-lg transition-colors ${formData.userType === 'BUYER' ? 'bg-secondary-600 border-secondary-500 text-white' : 'bg-earth-800/50 border-earth-600 text-earth-300 hover:bg-earth-700'}`}
-                >
-                  <User className="h-5 w-5" />
-                  <span>Buyer</span>
-                </button>
+            <div className="auth-input-group">
+              <label className="auth-label">Password</label>
+              <div className="auth-input-wrapper">
+                <Lock className="auth-input-icon" size={18} />
+                <input
+                  name="password" type="password" required minLength={6}
+                  value={formData.password} onChange={handleInputChange}
+                  className="auth-input"
+                  placeholder="••••••••"
+                />
               </div>
             </div>
+          </div>
 
-            <div className="border-t border-earth-700 pt-4">
-              <label className="block text-sm font-medium text-earth-100 mb-2">Primary Location (Required for localized updates)</label>
-              {location ? (
-                <div className="bg-earth-800/50 border border-primary-500/50 rounded-lg p-3 flex items-center justify-between">
-                  <div className="flex items-center text-sm text-primary-200">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Location captured successfully
-                  </div>
-                  <button type="button" onClick={getLocation} className="text-xs text-primary-400 hover:text-primary-300">
-                    Update
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={getLocation}
-                  disabled={locationLoading}
-                  className="w-full flex justify-center py-2.5 px-4 border border-earth-500 border-dashed rounded-lg text-sm font-medium text-earth-200 hover:border-primary-500 hover:text-primary-400 focus:outline-none transition-colors"
-                >
-                  {locationLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
-                  {locationLoading ? 'Getting location...' : 'Get Current Location'}
-                </button>
-              )}
-            </div>
-
-            <div className="pt-2">
+          <div className="auth-input-group" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20 }}>
+            <label className="auth-label">I am registering as a:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <button
-                type="submit"
-                disabled={loading || !location}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors"
+                type="button"
+                onClick={() => setFormData(prev => ({...prev, userType: 'FARMER'}))}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '12px', borderRadius: '8px', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: formData.userType === 'FARMER' ? 'var(--color-primary)' : 'rgba(0,0,0,0.2)',
+                  border: formData.userType === 'FARMER' ? '1px solid var(--color-primary-light)' : '1px solid rgba(255,255,255,0.1)',
+                  color: 'white', fontWeight: 600
+                }}
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
+                <Wheat size={18} /> Farmer
               </button>
-              {!location && (
-                <p className="text-xs text-center text-earth-400 mt-2">Please capture your location to continue.</p>
-              )}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({...prev, userType: 'BUYER'}))}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '12px', borderRadius: '8px', cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: formData.userType === 'BUYER' ? 'var(--color-info)' : 'rgba(0,0,0,0.2)',
+                  border: formData.userType === 'BUYER' ? '1px solid #4FC3F7' : '1px solid rgba(255,255,255,0.1)',
+                  color: 'white', fontWeight: 600
+                }}
+              >
+                <User size={18} /> Buyer
+              </button>
             </div>
-          </form>
+          </div>
 
-        </div>
+          <div className="auth-input-group" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20 }}>
+            <label className="auth-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Primary Location <span style={{ fontSize: '0.75rem', color: 'var(--color-primary-100)', fontWeight: 400 }}>(Required for localized updates)</span>
+            </label>
+            {location ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'rgba(27, 94, 32, 0.2)', border: '1px solid var(--color-primary)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#A5D6A7', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <MapPin size={16} /> Location captured successfully
+                </span>
+                <button type="button" onClick={getLocation} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}>
+                  Update
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={getLocation}
+                disabled={locationLoading}
+                style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.4)', borderRadius: '8px', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--color-primary-100)'}
+                onMouseOut={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'}
+              >
+                {locationLoading ? <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> : <MapPin size={16} />}
+                {locationLoading ? 'Getting location...' : 'Get Current Location'}
+              </button>
+            )}
+          </div>
+
+          <div style={{ marginTop: 32 }}>
+            <button
+              type="submit"
+              disabled={loading || !location}
+              className="auth-submit-btn"
+            >
+              {loading ? <Loader2 size={20} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> : 'Create Account'}
+            </button>
+            {!location && (
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: 12 }}>
+                Please capture your location to continue.
+              </p>
+            )}
+          </div>
+        </form>
+
       </div>
     </div>
   );

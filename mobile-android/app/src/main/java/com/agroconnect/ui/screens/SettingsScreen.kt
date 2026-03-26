@@ -327,7 +327,7 @@ fun SettingsScreen(navController: NavController) {
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Danger),
             border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Danger))
         ) {
-            Icon(Icons.Filled.Logout, contentDescription = null)
+            Icon(Icons.Filled.Logout, contentDescription = "Logout icon")
             Spacer(Modifier.width(8.dp))
             Text("Logout", style = MaterialTheme.typography.labelLarge)
         }

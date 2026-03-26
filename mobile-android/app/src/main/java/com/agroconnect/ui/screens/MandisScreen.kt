@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +34,7 @@ fun MandisScreen() {
     var mandis by remember { mutableStateOf<List<Mandi>>(emptyList()) }
     var search by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(true) }
+    var viewMode by remember { mutableStateOf("LIST") } // LIST or MAP
 
     LaunchedEffect(Unit) {
         scope.launch {
@@ -71,80 +73,113 @@ fun MandisScreen() {
         return
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 16.dp),
-    ) {
-        // Search Bar
-        item {
-            OutlinedTextField(
-                value = search,
-                onValueChange = { search = it },
-                placeholder = { Text("Search mandis…") },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-            )
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+        TabRow(selectedTabIndex = if (viewMode == "LIST") 0 else 1) {
+            Tab(selected = viewMode == "LIST", onClick = { viewMode = "LIST" }, text = { Text("List") })
+            Tab(selected = viewMode == "MAP", onClick = { viewMode = "MAP" }, text = { Text("Map") })
         }
+        
+        Spacer(Modifier.height(8.dp))
+        
+        OutlinedTextField(
+            value = search,
+            onValueChange = { search = it },
+            placeholder = { Text("Search mandis…") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search icon") },
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+        )
 
-        item {
-            Text("📍 ${filtered.size} markets found", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text("📍 ${filtered.size} markets found", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
 
-        items(filtered) { mandi ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        if (viewMode == "LIST") {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(mandi.mandiName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                items(filtered) { mandi ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(mandi.mandiName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "${mandi.districtName ?: ""}, ${mandi.stateCode}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .height(24.dp)
+                                        .background(
+                                            color = Green50,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .padding(horizontal = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(mandi.stateCode, style = MaterialTheme.typography.labelSmall, color = Green800)
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
                             Text(
-                                "${mandi.districtName ?: ""}, ${mandi.stateCode}",
+                                "📍 ${mandi.latitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)}°N, ${mandi.longitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)}°E",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .height(24.dp)
-                                .background(
-                                    color = Green50,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(mandi.stateCode, style = MaterialTheme.typography.labelSmall, color = Green800)
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "📍 ${mandi.latitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)}°N, ${mandi.longitude.toBigDecimal().setScale(4, java.math.RoundingMode.HALF_UP)}°E",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Button(
-                        onClick = {
-                            val uri = Uri.parse("google.navigation:q=${mandi.latitude},${mandi.longitude}")
-                            val intent = Intent(Intent.ACTION_VIEW, uri).apply { setPackage("com.google.android.apps.maps") }
-                            try { context.startActivity(intent) } catch (_: Exception) {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${mandi.latitude},${mandi.longitude}")))
+                            Spacer(Modifier.height(10.dp))
+                            Button(
+                                onClick = {
+                                    val uri = Uri.parse("google.navigation:q=${mandi.latitude},${mandi.longitude}")
+                                    val intent = Intent(Intent.ACTION_VIEW, uri).apply { setPackage("com.google.android.apps.maps") }
+                                    try { context.startActivity(intent) } catch (_: Exception) {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${mandi.latitude},${mandi.longitude}")))
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                            ) {
+                                Icon(Icons.Filled.Navigation, contentDescription = "Navigation icon", modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Directions")
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    ) {
-                        Icon(Icons.Filled.Navigation, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Directions")
+                        }
                     }
                 }
             }
+        } else {
+            AndroidView(
+                factory = { ctx ->
+                    org.osmdroid.config.Configuration.getInstance().userAgentValue = ctx.packageName
+                    org.osmdroid.views.MapView(ctx).apply {
+                        setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
+                        setMultiTouchControls(true)
+                        controller.setZoom(6.0)
+                    }
+                },
+                update = { mapView ->
+                    mapView.overlays.clear()
+                    filtered.forEach { mandi ->
+                        val marker = org.osmdroid.views.overlay.Marker(mapView)
+                        marker.position = org.osmdroid.util.GeoPoint(mandi.latitude, mandi.longitude)
+                        marker.title = mandi.mandiName
+                        marker.snippet = "${mandi.districtName ?: ""}, ${mandi.stateCode}"
+                        mapView.overlays.add(marker)
+                    }
+                    if (filtered.isNotEmpty()) {
+                        mapView.controller.setCenter(org.osmdroid.util.GeoPoint(filtered.first().latitude, filtered.first().longitude))
+                    }
+                    mapView.invalidate()
+                },
+                modifier = Modifier.fillMaxSize().padding(bottom = 16.dp)
+            )
         }
     }
 }

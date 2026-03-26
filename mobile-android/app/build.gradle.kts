@@ -113,6 +113,9 @@ dependencies {
 
     // WorkManager (Background sync)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // OSMDroid for offline-capable Maps (No API key required)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
 
     // Charts (Compose)
     implementation("co.yml:ycharts:2.1.0")

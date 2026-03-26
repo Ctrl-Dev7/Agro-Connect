@@ -227,7 +227,7 @@ fun PredictionsScreen() {
                             CircularProgressIndicator(Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                             Spacer(Modifier.width(8.dp))
                         }
-                        Icon(Icons.Filled.BarChart, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.BarChart, contentDescription = "BarChart icon", modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(if (loading) "Predicting…" else "Get Forecast")
                     }
@@ -280,9 +280,7 @@ fun PredictionsScreen() {
                             modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.Top,
                         ) {
-                            Icon(
-                                Icons.Filled.CheckCircle,
-                                contentDescription = null,
+                            Icon(Icons.Filled.CheckCircle, contentDescription = "CheckCircle icon",
                                 tint = Green800,
                                 modifier = Modifier.size(28.dp),
                             )

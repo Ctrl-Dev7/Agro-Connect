@@ -156,6 +156,7 @@ export default function MandisPage() {
                 </button>
                 <button
                   className="btn btn-outline btn-sm"
+                  aria-label="Open Map externally"
                   onClick={() => window.open(`https://www.google.com/maps/@${mandi.latitude},${mandi.longitude},15z`, '_blank')}
                 >
                   <ExternalLink size={14} />

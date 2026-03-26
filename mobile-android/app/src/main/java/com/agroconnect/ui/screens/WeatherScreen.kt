@@ -175,7 +175,7 @@ fun WeatherScreen() {
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
-                        Icon(Icons.Filled.Spa, contentDescription = null, tint = Lime600, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Filled.Spa, contentDescription = "Spa icon", tint = Lime600, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(10.dp))
                         Text(adv, style = MaterialTheme.typography.bodySmall)
                     }
@@ -188,7 +188,7 @@ fun WeatherScreen() {
 @Composable
 fun WeatherStat(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = "Graphic Element", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
         Spacer(Modifier.height(4.dp))
         Text(text, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium)
     }

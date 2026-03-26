@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   keywords: "agriculture, farming, crop prices, mandi, weather, India, prediction",
 };
 
+import I18nProvider from "@/components/I18nProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -14,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <I18nProvider>
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

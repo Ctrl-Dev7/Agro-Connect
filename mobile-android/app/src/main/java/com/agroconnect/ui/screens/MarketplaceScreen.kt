@@ -139,7 +139,7 @@ fun MarketplaceScreen(navController: NavController) {
                         value = search,
                         onValueChange = { search = it },
                         placeholder = { Text("Search crops, equipment…") },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search icon") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
@@ -164,9 +164,7 @@ fun MarketplaceScreen(navController: NavController) {
                                 modifier = Modifier.padding(32.dp).fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                Icon(
-                                    Icons.Filled.Storefront,
-                                    contentDescription = null,
+                                Icon(Icons.Filled.Storefront, contentDescription = "Storefront icon",
                                     modifier = Modifier.size(48.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

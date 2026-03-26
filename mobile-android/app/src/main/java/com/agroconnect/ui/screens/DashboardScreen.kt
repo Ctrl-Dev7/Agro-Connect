@@ -157,9 +157,7 @@ fun DashboardScreen(navController: NavController) {
     if (errorMessage != null) {
         Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    Icons.Filled.CloudOff,
-                    contentDescription = null,
+                Icon(Icons.Filled.CloudOff, contentDescription = "CloudOff icon",
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.error
                 )
@@ -291,7 +289,7 @@ fun StatCard(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = "Graphic Element", tint = color, modifier = Modifier.size(28.dp))
             Spacer(Modifier.height(6.dp))
             Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -329,9 +327,7 @@ fun CropPriceCard(cp: CropPriceItem) {
                     fontWeight = FontWeight.Bold,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        if (isUp) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown,
-                        contentDescription = null,
+                    Icon(if (isUp) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown, contentDescription = "TrendingDown icon",
                         tint = if (isUp) Success else Danger,
                         modifier = Modifier.size(14.dp),
                     )

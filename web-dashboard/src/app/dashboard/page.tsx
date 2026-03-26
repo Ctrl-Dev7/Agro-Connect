@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/lib/supabase';
 import {
   TrendingUp,
@@ -45,6 +46,7 @@ interface PriceHistory {
 }
 
 export default function DashboardPage() {
+  const { t, i18n } = useTranslation();
   const [cropPrices, setCropPrices] = useState<CropPrice[]>([]);
   const [totalMandis, setTotalMandis] = useState(0);
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
@@ -175,6 +177,20 @@ export default function DashboardPage() {
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>{t('dashboardTitle')}</h2>
+        <button 
+          className="btn btn-sm btn-outline" 
+          onClick={() => {
+            const next = i18n.language === 'en' ? 'hi' : 'en';
+            i18n.changeLanguage(next);
+            localStorage.setItem('agro_lang', next);
+          }}
+        >
+          {t('changeLang')}
+        </button>
+      </div>
+
       {/* Stats Row */}
       <div className="grid-4" style={{ marginBottom: 24 }}>
         <div className="stat-card animate-in stagger-1">
@@ -244,9 +260,9 @@ export default function DashboardPage() {
         {/* Price Chart */}
         <div className="card card-accent">
           <div className="card-header">
-            <h3>📈 Wheat Price Trend — Azadpur, Delhi</h3>
+            <h3>📈 {t('priceHistoryWheat')}</h3>
             <Link href="/dashboard/predictions" className="btn btn-sm btn-outline">
-              View All
+              {t('viewAll')}
             </Link>
           </div>
           <div className="card-body">
@@ -298,9 +314,9 @@ export default function DashboardPage() {
         {/* Advisories Panel */}
         <div className="card card-accent-warning">
           <div className="card-header">
-            <h3>⚠️ Active Advisories</h3>
+            <h3>⚠️ {t('recentAdvisories')}</h3>
             <Link href="/dashboard/advisories" className="btn btn-sm btn-outline">
-              All Tips
+              {t('viewAll')}
             </Link>
           </div>
           <div className="card-body">
@@ -327,7 +343,7 @@ export default function DashboardPage() {
                       {adv.title_en}
                     </div>
                     <span className={`badge ${urgencyBadge(adv.urgency)}`}>
-                      {adv.urgency}
+                      {t(`urgency.${adv.urgency}`)}
                     </span>
                   </div>
                 </div>
@@ -340,9 +356,9 @@ export default function DashboardPage() {
       {/* Crop Prices Table */}
       <div className="card">
         <div className="card-header">
-          <h3>💰 Live Crop Prices</h3>
+          <h3>💰 {t('latestPrices')}</h3>
           <Link href="/dashboard/predictions" className="btn btn-sm btn-primary">
-            <TrendingUp size={14} /> Get Forecasts
+            <TrendingUp size={14} /> {t('predictedPrices')}
           </Link>
         </div>
         <div className="card-body" style={{ paddingTop: 0 }}>

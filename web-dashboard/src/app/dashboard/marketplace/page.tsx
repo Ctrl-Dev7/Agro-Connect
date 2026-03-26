@@ -261,6 +261,7 @@ export default function MarketplacePage() {
                         <button
                           className="btn btn-sm"
                           onClick={() => deleteListing(listing.listing_id)}
+                          aria-label="Delete listing"
                           style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-danger)' }}
                         >
                           <Trash2 size={14} />
@@ -294,7 +295,11 @@ export default function MarketplacePage() {
           <div className="card" style={{ width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', padding: 28 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 20 }}>📝 Create Listing</h2>
-              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <button 
+                onClick={() => setShowForm(false)} 
+                aria-label="Close modal"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
                 <X size={22} />
               </button>
             </div>

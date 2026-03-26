@@ -167,6 +167,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     key={l}
                     className={`lang-btn ${lang === l ? 'active' : ''}`}
                     onClick={() => setLang(l)}
+                    aria-label={`Switch to ${l === 'en' ? 'English' : l === 'hi' ? 'Hindi' : 'Marathi'}`}
                   >
                     {langLabels[l]}
                   </button>
