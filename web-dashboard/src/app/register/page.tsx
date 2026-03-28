@@ -93,7 +93,7 @@ export default function RegisterPage() {
             </div>
             <h1 className="auth-title">Create an Account</h1>
             <p className="auth-subtitle">
-              Or <Link href="/login" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>sign in to your existing account</Link>.
+              Join the ecosystem and manage your farm operations.
             </p>
           </div>
 
@@ -251,6 +251,13 @@ export default function RegisterPage() {
             )}
           </div>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '32px' }}>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>Already have an account? </span>
+          <Link href="/login" style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }}>
+            Sign in
+          </Link>
+        </div>
 
         </div>
       </div>

@@ -59,7 +59,7 @@ export default function LoginPage() {
             </div>
             <h1 className="auth-title">Welcome Back</h1>
             <p className="auth-subtitle">
-              Sign in to manage your farm, or <Link href="/register" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>register here</Link>.
+              Sign in to manage your farm and operations.
             </p>
           </div>
 
@@ -127,6 +127,13 @@ export default function LoginPage() {
             </svg>
             Sign in with Google
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: '32px' }}>
+            <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>Don't have an account? </span>
+            <Link href="/register" style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }}>
+              Sign up
+            </Link>
+          </div>
 
         </div>
       </div>
