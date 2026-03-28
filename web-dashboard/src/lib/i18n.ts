@@ -5,6 +5,10 @@ const resources = {
   en: {
     translation: {
       dashboardTitle: "Agro-Connect Dashboard",
+      goodMorning: "Good Morning",
+      goodAfternoon: "Good Afternoon",
+      goodEvening: "Good Evening",
+      dashboardSubtitle: "Here's what's happening with your farm today",
       smartFarming: "Smart Farming Platform",
       marketOverview: "Market Overview",
       totalMandis: "Total Regulated Mandis",
@@ -33,6 +37,10 @@ const resources = {
   hi: {
     translation: {
       dashboardTitle: "एग्रो-कनेक्ट डैशबोर्ड",
+      goodMorning: "सुप्रभात",
+      goodAfternoon: "नमस्कार",
+      goodEvening: "शुभ संध्या",
+      dashboardSubtitle: "आज आपकी खेती से जुड़ी अपडेट",
       smartFarming: "स्मार्ट खेती मंच",
       marketOverview: "बाजार अवलोकन",
       totalMandis: "कुल विनियमित मंडियां",
@@ -61,6 +69,10 @@ const resources = {
   mr: {
     translation: {
       dashboardTitle: "Agro-Connect डॅशबोर्ड",
+      goodMorning: "सुप्रभात",
+      goodAfternoon: "नमस्कार",
+      goodEvening: "शुभ संध्याकाळ",
+      dashboardSubtitle: "आज आपल्या शेतीत काय चालू आहे ते पहा",
       smartFarming: "स्मार्ट शेती प्लॅटफॉर्म",
       marketOverview: "बाजार आढावा",
       totalMandis: "एकूण बाजार समित्या (मंडी)",

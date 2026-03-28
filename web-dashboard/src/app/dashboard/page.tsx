@@ -14,6 +14,9 @@ import {
   Minus,
   Sprout,
   IndianRupee,
+  Sun,
+  Sunset,
+  Moon,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -64,10 +67,35 @@ export default function DashboardPage() {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('');
   
   // Localized Dashboard Context
   const [localMandi, setLocalMandi] = useState<{ id: number; name: string }>({ id: 47, name: 'Delhi' });
   const [primaryCrop, setPrimaryCrop] = useState<{ id: number; name: string }>({ id: 1, name: 'Wheat' });
+
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return { text: t('goodMorning', 'Good Morning'), icon: <Sun size={28} className="greeting-icon morning" /> };
+    } else if (hour < 17) {
+      return { text: t('goodAfternoon', 'Good Afternoon'), icon: <Sun size={28} className="greeting-icon afternoon" /> };
+    } else {
+      return { text: t('goodEvening', 'Good Evening'), icon: <Sunset size={28} className="greeting-icon evening" /> };
+    }
+  };
+
+  // Fetch user name
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata) {
+        const firstName = user.user_metadata.first_name || user.user_metadata.name || '';
+        setUserName(firstName);
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -252,10 +280,23 @@ export default function DashboardPage() {
     );
   }
 
+  const greeting = getGreeting();
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--color-text-primary)' }}>{t('dashboardTitle')}</h2>
+      {/* Greeting Banner */}
+      <div className="greeting-banner">
+        <div className="greeting-content">
+          {greeting.icon}
+          <div>
+            <h2 className="greeting-text">
+              {greeting.text}{userName ? ', ' : ''}<span className="greeting-name">{userName}</span> 👋
+            </h2>
+            <p className="greeting-subtext">
+              {t('dashboardSubtitle', "Here's what's happening with your farm today")}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Row */}

@@ -1,47 +1,298 @@
 'use client';
 
-import { useState } from 'react';
-import { Settings, Globe, User, Sprout, MapPin, Bell, Palette } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Settings, Globe, User, Sprout, MapPin, Camera, LogOut, Mail, Phone, Shield, Save, Check, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  userType: string;
+  locationName: string;
+  avatarUrl: string;
+}
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [language, setLanguage] = useState('en');
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    userType: 'FARMER',
+    locationName: '',
+    avatarUrl: '',
+  });
 
-  function handleSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  // Fetch user data from Supabase auth metadata
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const meta = user.user_metadata || {};
+          setProfile({
+            firstName: meta.first_name || '',
+            lastName: meta.last_name || '',
+            email: user.email || '',
+            phone: meta.phone_number || '',
+            userType: meta.user_type || 'FARMER',
+            locationName: meta.location_name || '',
+            avatarUrl: meta.avatar_url || '',
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch user profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserProfile();
+  }, []);
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `avatars/${user.id}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        // Fallback: use local preview
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target?.result as string;
+          setProfile(prev => ({ ...prev, avatarUrl: dataUrl }));
+          supabase.auth.updateUser({
+            data: { avatar_url: dataUrl }
+          });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+        const publicUrl = data.publicUrl;
+        setProfile(prev => ({ ...prev, avatarUrl: publicUrl }));
+        await supabase.auth.updateUser({
+          data: { avatar_url: publicUrl }
+        });
+      }
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      // Fallback: use local preview
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setProfile(prev => ({ ...prev, avatarUrl: dataUrl }));
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Save profile
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          phone_number: profile.phone,
+          user_type: profile.userType,
+          location_name: profile.locationName,
+          avatar_url: profile.avatarUrl,
+        }
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Save failed:', err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Logout
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+    } catch (err) {
+      console.error('Logout failed:', err);
+      setLoggingOut(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div className="card-body" style={{ padding: 40 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+              <div className="skeleton" style={{ width: 100, height: 100, borderRadius: '50%' }} />
+              <div className="skeleton" style={{ width: 200, height: 20 }} />
+              <div className="skeleton" style={{ width: 160, height: 14 }} />
+            </div>
+          </div>
+        </div>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="card" style={{ marginBottom: 24 }}>
+            <div className="card-body" style={{ padding: 24 }}>
+              <div className="skeleton" style={{ width: '40%', height: 18, marginBottom: 16 }} />
+              <div className="skeleton" style={{ width: '100%', height: 42, marginBottom: 12 }} />
+              <div className="skeleton" style={{ width: '100%', height: 42 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      {/* Profile Section */}
-      <div className="card" style={{ marginBottom: 24 }}>
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      {/* Profile Header with Avatar */}
+      <div className="settings-profile-card">
+        <div className="settings-avatar-section">
+          <div className="settings-avatar-wrapper" onClick={() => fileInputRef.current?.click()}>
+            {profile.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Profile" className="settings-avatar-img" />
+            ) : (
+              <div className="settings-avatar-placeholder">
+                <User size={40} />
+              </div>
+            )}
+            <div className="settings-avatar-overlay">
+              {uploading ? <Loader2 size={20} className="spin-animation" /> : <Camera size={20} />}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleAvatarUpload}
+            />
+          </div>
+          <div className="settings-profile-info">
+            <h2 className="settings-profile-name">
+              {profile.firstName} {profile.lastName}
+            </h2>
+            <div className="settings-profile-meta">
+              <span className={`settings-user-badge ${profile.userType === 'FARMER' ? 'farmer' : 'buyer'}`}>
+                {profile.userType === 'FARMER' ? '🌾 Farmer' : '🛒 Buyer'}
+              </span>
+              {profile.locationName && (
+                <span className="settings-location-tag">
+                  <MapPin size={13} /> {profile.locationName.split(',')[0]}
+                </span>
+              )}
+            </div>
+            <p className="settings-email-display">
+              <Mail size={14} /> {profile.email}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal Information */}
+      <div className="card settings-card">
         <div className="card-header">
-          <h3><User size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Profile</h3>
+          <h3><User size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Personal Information</h3>
         </div>
         <div className="card-body">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input className="form-input" placeholder="Enter your name" defaultValue="" />
-          </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Phone Number</label>
-              <input className="form-input" placeholder="+91 XXXXX XXXXX" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-group">
+              <label className="form-label">First Name</label>
+              <input
+                className="form-input"
+                value={profile.firstName}
+                onChange={e => setProfile(p => ({ ...p, firstName: e.target.value }))}
+                placeholder="Enter first name"
+              />
             </div>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">User Type</label>
-              <select className="form-select">
-                <option value="FARMER">Farmer</option>
-                <option value="BUYER">Buyer</option>
-              </select>
+            <div className="form-group">
+              <label className="form-label">Last Name</label>
+              <input
+                className="form-input"
+                value={profile.lastName}
+                onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))}
+                placeholder="Enter last name"
+              />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-group">
+              <label className="form-label">
+                <Phone size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                Phone Number
+              </label>
+              <input
+                className="form-input"
+                value={profile.phone}
+                onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))}
+                placeholder="+91 XXXXX XXXXX"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">
+                <Mail size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                Email Address
+              </label>
+              <input
+                className="form-input"
+                value={profile.email}
+                disabled
+                style={{ opacity: 0.6, cursor: 'not-allowed' }}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">User Type</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <button
+                type="button"
+                className={`settings-type-btn ${profile.userType === 'FARMER' ? 'active farmer' : ''}`}
+                onClick={() => setProfile(p => ({ ...p, userType: 'FARMER' }))}
+              >
+                <Sprout size={18} /> Farmer
+              </button>
+              <button
+                type="button"
+                className={`settings-type-btn ${profile.userType === 'BUYER' ? 'active buyer' : ''}`}
+                onClick={() => setProfile(p => ({ ...p, userType: 'BUYER' }))}
+              >
+                <User size={18} /> Buyer
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Location & Crop Preferences */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      {/* Location & Farming Preferences */}
+      <div className="card settings-card">
         <div className="card-header">
           <h3><Sprout size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Farming Preferences</h3>
         </div>
@@ -51,10 +302,15 @@ export default function SettingsPage() {
               <MapPin size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
               Primary Location
             </label>
-            <input className="form-input" placeholder="Village / District / State" />
+            <input
+              className="form-input"
+              value={profile.locationName}
+              onChange={e => setProfile(p => ({ ...p, locationName: e.target.value }))}
+              placeholder="Village / District / State"
+            />
           </div>
           <div className="form-group">
-            <label className="form-label">Primary Crops (up to 3)</label>
+            <label className="form-label">Primary Crops (select up to 3)</label>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['Wheat', 'Rice', 'Onion', 'Tomato', 'Potato', 'Soybean', 'Cotton', 'Sugarcane'].map(crop => (
                 <button
@@ -78,7 +334,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Language Settings */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      <div className="card settings-card">
         <div className="card-header">
           <h3><Globe size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Language / भाषा</h3>
         </div>
@@ -106,16 +362,29 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Save Button */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-        {saved && (
-          <div className="badge badge-success" style={{ padding: '10px 16px', fontSize: '0.85rem' }}>
-            ✓ Settings saved successfully!
-          </div>
-        )}
-        <button className="btn btn-primary btn-lg" onClick={handleSave}>
-          Save Settings
-        </button>
+      {/* Action Buttons */}
+      <div className="settings-actions">
+        <div className="settings-actions-left">
+          {saved && (
+            <div className="settings-save-success">
+              <Check size={16} /> Settings saved successfully!
+            </div>
+          )}
+        </div>
+        <div className="settings-actions-right">
+          <button
+            className="settings-logout-btn"
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            {loggingOut ? <Loader2 size={18} className="spin-animation" /> : <LogOut size={18} />}
+            {loggingOut ? 'Logging out...' : 'Log Out'}
+          </button>
+          <button className="btn btn-primary btn-lg" onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 size={18} className="spin-animation" /> : <Save size={18} />}
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
       </div>
     </div>
   );

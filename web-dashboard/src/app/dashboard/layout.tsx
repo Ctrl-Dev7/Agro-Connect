@@ -2,7 +2,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -13,8 +13,9 @@ import {
   Menu,
   X,
   Sprout,
-  LogOut,
   Globe,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import i18n from '@/lib/i18n';
 
@@ -44,10 +45,6 @@ const navItems = [
   { href: '/dashboard/advisories', icon: BookOpen, label: 'Farming Tips', labelHi: 'खेती की सलाह', labelMr: 'शेती टिप्स' },
 ];
 
-const secondaryItems = [
-  { href: '/dashboard/settings', icon: Settings, label: 'Settings', labelHi: 'सेटिंग्स', labelMr: 'सेटिंग्ज' },
-];
-
 function getLabel(item: { label: string; labelHi: string; labelMr: string }, lang: Language) {
   return lang === 'hi' ? item.labelHi : lang === 'mr' ? item.labelMr : item.label;
 }
@@ -55,8 +52,19 @@ function getLabel(item: { label: string; labelHi: string; labelMr: string }, lan
 /* ─── Dashboard Layout ─── */
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile overlay
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // desktop collapse
   const [lang, setLang] = useState<Language>('en');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -64,15 +72,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const pageTitle = (() => {
-    const found = [...navItems, ...secondaryItems].find(
+    const found = [...navItems].find(
       (item) => pathname === item.href
     );
     return found ? getLabel(found, lang) : lang === 'hi' ? 'डैशबोर्ड' : lang === 'mr' ? 'डॅशबोर्ड' : 'Dashboard';
   })();
 
+  const handleSidebarToggle = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
   return (
     <LanguageContext.Provider value={{ lang, setLang }}>
-      <div className="app-shell">
+      <div className={`app-shell ${sidebarCollapsed && !isMobile ? 'sidebar-collapsed' : ''}`}>
         {/* Sidebar Overlay (mobile) */}
         <div
           className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`}
@@ -80,12 +96,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Sidebar */}
-        <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <aside className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed && !isMobile ? 'collapsed' : ''}`}>
           <div className="sidebar-brand">
             <div className="sidebar-brand-icon">
               <Sprout size={22} />
             </div>
-            <div>
+            <div className="sidebar-brand-text">
               <h1>Agro-Connect</h1>
               <span>Smart Farming Platform</span>
             </div>
@@ -103,48 +119,25 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={`sidebar-link ${isActive ? 'active' : ''}`}
+                  title={getLabel(item, lang)}
                 >
                   <Icon size={20} />
-                  {getLabel(item, lang)}
-                </Link>
-              );
-            })}
-
-            <div className="sidebar-section-label" style={{ marginTop: 16 }}>
-              {lang === 'hi' ? 'सेटिंग्स' : lang === 'mr' ? 'सेटिंग्ज' : 'Account'}
-            </div>
-            {secondaryItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  <Icon size={20} />
-                  {getLabel(item, lang)}
+                  <span className="sidebar-link-text">{getLabel(item, lang)}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Sidebar footer */}
-          <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <button 
-              className="sidebar-link" 
-              style={{ width: '100%', border: 'none', background: 'none', cursor: 'pointer' }}
-              onClick={async () => {
-                const { createClient } = await import('@/utils/supabase/client');
-                const supabase = createClient();
-                await supabase.auth.signOut();
-                window.location.href = '/login';
-              }}
+          {/* Sidebar collapse toggle (desktop) */}
+          {!isMobile && (
+            <button
+              className="sidebar-collapse-btn"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              aria-label="Toggle sidebar"
             >
-              <LogOut size={20} />
-              {lang === 'hi' ? 'लॉगआउट' : lang === 'mr' ? 'लॉगआउट' : 'Logout'}
+              {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
-          </div>
+          )}
         </aside>
 
         {/* Main Content */}
@@ -153,7 +146,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="header-left">
               <button
                 className="menu-toggle"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                onClick={handleSidebarToggle}
                 aria-label="Toggle menu"
               >
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
@@ -178,6 +171,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   </button>
                 ))}
               </div>
+
+              {/* Account Settings Button */}
+              <button
+                className={`header-settings-btn ${pathname === '/dashboard/settings' ? 'active' : ''}`}
+                onClick={() => router.push('/dashboard/settings')}
+                aria-label="Account Settings"
+                title={lang === 'hi' ? 'सेटिंग्स' : lang === 'mr' ? 'सेटिंग्ज' : 'Account Settings'}
+              >
+                <Settings size={20} />
+              </button>
             </div>
           </header>
 
