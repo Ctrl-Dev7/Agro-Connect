@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import FarmSummaryStrip from '@/components/dashboard/FarmSummaryStrip';
 import ImmediateActionBar from '@/components/dashboard/ImmediateActionBar';
+import SellHoldIndicator from '@/components/dashboard/SellHoldIndicator';
 
 export default function DashboardPage() {
   const { t } = useTranslation();
@@ -66,6 +67,9 @@ export default function DashboardPage() {
 
       {/* Zone 1 — Immediate Actions */}
       <ImmediateActionBar />
+
+      {/* Zone 2 — AI Recommendations */}
+      <SellHoldIndicator />
 
       {/* Zone 3 — Farm & Inventory (Placeholder) */}
       <div className="animate-in stagger-3" style={{ marginBottom: 'var(--space-xl)' }}>
