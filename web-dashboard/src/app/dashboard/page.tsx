@@ -45,6 +45,18 @@ interface PriceHistory {
   price: number;
 }
 
+// Haversine distance helper
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
 export default function DashboardPage() {
   const { t, i18n } = useTranslation();
   const [cropPrices, setCropPrices] = useState<CropPrice[]>([]);
@@ -52,65 +64,130 @@ export default function DashboardPage() {
   const [advisories, setAdvisories] = useState<Advisory[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Localized Dashboard Context
+  const [localMandi, setLocalMandi] = useState<{ id: number; name: string }>({ id: 47, name: 'Delhi' });
+  const [primaryCrop, setPrimaryCrop] = useState<{ id: number; name: string }>({ id: 1, name: 'Wheat' });
 
   useEffect(() => {
-    loadDashboardData();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => loadDashboardData(pos.coords.latitude, pos.coords.longitude),
+        (err) => {
+          console.warn('Geolocation blocked or error, falling back to Delhi defaults.');
+          loadDashboardData();
+        }
+      );
+    } else {
+      loadDashboardData();
+    }
   }, []);
 
-  async function loadDashboardData() {
+  async function loadDashboardData(userLat?: number, userLon?: number) {
     try {
-      // Fetch latest prices for top crops
-      const { data: crops } = await supabase
-        .from('c_crops')
-        .select('crop_id, crop_name_en')
-        .in('crop_id', [1, 2, 7, 8, 9, 4]) // Wheat, Rice, Onion, Tomato, Potato, Soybean
-        .order('crop_id');
+      let targetMandi = { id: 47, name: 'Delhi' };
+      
+      // 1. Geolocate Nearest Mandi
+      if (userLat && userLon) {
+        // [BACKGROUND SYNC] Auto-update user profile with real-time location
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const uType = user.user_metadata?.user_type || 'FARMER';
+          const table = uType === 'FARMER' ? 'u_farmer_profile' : 'u_buyer_profile';
+          await supabase.from(table).upsert({ 
+            user_id: user.id, 
+            primary_location_lat: userLat, 
+            primary_location_lon: userLon 
+          }, { onConflict: 'user_id' });
+        }
 
-      if (crops) {
-        const pricePromises = crops.map(async (crop) => {
-          const { data: latest } = await supabase
-            .from('p_daily_market_prices')
-            .select('price_per_quintal, date')
-            .eq('crop_id', crop.crop_id)
-            .order('date', { ascending: false })
-            .limit(2);
+        const { data: mandis } = await supabase.from('c_mandis').select('mandi_id, mandi_name, latitude, longitude');
+        if (mandis && mandis.length > 0) {
+          let nearest = mandis[0];
+          let minDist = getDistance(userLat, userLon, nearest.latitude, nearest.longitude);
+          for (const m of mandis) {
+            const d = getDistance(userLat, userLon, m.latitude, m.longitude);
+            if (d < minDist) {
+              minDist = d;
+              nearest = m;
+            }
+          }
+          targetMandi = { id: nearest.mandi_id, name: nearest.mandi_name };
+        }
+      }
+      setLocalMandi(targetMandi);
 
-          const latestPrice = latest?.[0]?.price_per_quintal || 0;
-          const prevPrice = latest?.[1]?.price_per_quintal || latestPrice;
-          const changePct = prevPrice > 0 ? ((latestPrice - prevPrice) / prevPrice) * 100 : 0;
+      // 2. Fetch Top 6 Active Crops at this local mandi
+      const { data: recentPrices } = await supabase
+        .from('p_daily_market_prices')
+        .select('crop_id, c_crops(crop_name_en)')
+        .eq('mandi_id', targetMandi.id)
+        .order('date', { ascending: false })
+        .limit(200);
 
-          return {
-            crop_id: crop.crop_id,
-            crop_name: crop.crop_name_en,
-            latest_price: latestPrice,
-            prev_price: prevPrice,
-            change_pct: Math.round(changePct * 100) / 100,
-          };
-        });
-        const prices = await Promise.all(pricePromises);
-        setCropPrices(prices);
+      let localCrops: { id: number; name: string }[] = [];
+      if (recentPrices && recentPrices.length > 0) {
+        const uniqueCropMap = new Map();
+        for (const row of recentPrices) {
+          if (!uniqueCropMap.has(row.crop_id)) {
+            const cropData = row.c_crops as any;
+            uniqueCropMap.set(row.crop_id, cropData?.crop_name_en || 'Unknown');
+          }
+        }
+        localCrops = Array.from(uniqueCropMap.entries()).slice(0, 6).map(([id, name]) => ({ id, name }));
       }
 
+      // Fallback to global crops if empty local market
+      if (localCrops.length === 0) {
+        const { data: crops } = await supabase
+          .from('c_crops')
+          .select('crop_id, crop_name_en')
+          .in('crop_id', [1, 2, 7, 8, 9, 4]);
+        localCrops = crops ? crops.map(c => ({ id: c.crop_id, name: c.crop_name_en })) : [];
+      }
+
+      const mainCrop = localCrops[0] || { id: 1, name: 'Wheat' };
+      setPrimaryCrop(mainCrop);
+
+      // 3. Fetch Prices for these specific crops (globally or locally)
+      const pricePromises = localCrops.map(async (crop) => {
+        const { data: latest } = await supabase
+          .from('p_daily_market_prices')
+          .select('price_per_quintal, date')
+          .eq('crop_id', crop.id)
+          .eq('mandi_id', targetMandi.id)
+          .order('date', { ascending: false })
+          .limit(2);
+
+        const latestPrice = latest?.[0]?.price_per_quintal || 0;
+        const prevPrice = latest?.[1]?.price_per_quintal || latestPrice;
+        const changePct = prevPrice > 0 ? ((latestPrice - prevPrice) / prevPrice) * 100 : 0;
+
+        return {
+          crop_id: crop.id,
+          crop_name: crop.name,
+          latest_price: latestPrice,
+          prev_price: prevPrice,
+          change_pct: Math.round(changePct * 100) / 100,
+        };
+      });
+      const prices = await Promise.all(pricePromises);
+      setCropPrices(prices);
+
       // Fetch mandi count
-      const { count } = await supabase
-        .from('c_mandis')
-        .select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('c_mandis').select('*', { count: 'exact', head: true });
       setTotalMandis(count || 0);
 
       // Fetch recent advisories
-      const { data: advData } = await supabase
-        .from('a_advisories')
-        .select('advisory_id, title_en, advisory_type, urgency')
-        .order('urgency', { ascending: true })
-        .limit(4);
+      const { data: advData } = await supabase.from('a_advisories').select('advisory_id, title_en, advisory_type, urgency').order('urgency', { ascending: true }).limit(4);
       setAdvisories(advData || []);
 
-      // Fetch price history for chart (Wheat at Delhi)
+      // 4. Fetch localized Price History for the primary local crop
       const { data: histData } = await supabase
         .from('p_daily_market_prices')
         .select('date, price_per_quintal')
-        .eq('crop_id', 1)
-        .eq('mandi_id', 47)
+        .eq('crop_id', mainCrop.id)
+        .eq('mandi_id', targetMandi.id)
         .order('date', { ascending: true })
         .limit(30);
 
@@ -201,17 +278,17 @@ export default function DashboardPage() {
             <IndianRupee size={24} />
           </div>
           <div className="stat-info">
-            <h4>{t('wheatAvg')}</h4>
+            <h4>{primaryCrop.name} (Avg)</h4>
             <div className="stat-value">
-              ₹{cropPrices.find(c => c.crop_id === 1)?.latest_price?.toLocaleString('en-IN') || '—'}
+              ₹{cropPrices.find(c => c.crop_id === primaryCrop.id)?.latest_price?.toLocaleString('en-IN') || '—'}
             </div>
             {(() => {
-              const wheat = cropPrices.find(c => c.crop_id === 1);
-              if (!wheat) return null;
+              const main = cropPrices.find(c => c.crop_id === primaryCrop.id);
+              if (!main) return null;
               return (
-                <div className={`stat-change ${wheat.change_pct >= 0 ? 'up' : 'down'}`}>
-                  {wheat.change_pct >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                  {Math.abs(wheat.change_pct)}%
+                <div className={`stat-change ${main.change_pct >= 0 ? 'up' : 'down'}`}>
+                  {main.change_pct >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                  {Math.abs(main.change_pct)}%
                 </div>
               );
             })()}
@@ -250,7 +327,7 @@ export default function DashboardPage() {
         {/* Price Chart */}
         <div className="card card-accent">
           <div className="card-header">
-            <h3>📈 {t('priceHistoryWheat')}</h3>
+            <h3>📈 Price History ({primaryCrop.name} - {localMandi.name})</h3>
             <Link href="/dashboard/predictions" className="btn btn-sm btn-outline">
               {t('viewAll')}
             </Link>
