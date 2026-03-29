@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import i18n from '@/lib/i18n';
+import VoiceAssistant from '@/components/dashboard/VoiceAssistant';
 
 /* ─── Language Context ─── */
 type Language = 'en' | 'hi' | 'mr';
@@ -189,6 +190,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+
+      <VoiceAssistant />
     </LanguageContext.Provider>
   );
 }
