@@ -16,9 +16,14 @@ import {
   Globe,
   ChevronLeft,
   ChevronRight,
+  LogOut,
+  FileText,
+  Bug,
+  Leaf,
 } from 'lucide-react';
 import i18n from '@/lib/i18n';
 import VoiceAssistant from '@/components/dashboard/VoiceAssistant';
+import { supabase } from '@/lib/supabase';
 
 /* ─── Language Context ─── */
 type Language = 'en' | 'hi' | 'mr';
@@ -39,25 +44,29 @@ const langLabels: Record<Language, string> = { en: 'EN', hi: 'हिं', mr: '�
 
 /* ─── Nav Items ─── */
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', labelHi: 'डैशबोर्ड', labelMr: 'डॅशबोर्ड' },
-  { href: '/dashboard/predictions', icon: TrendingUp, label: 'Price Forecasts', labelHi: 'मूल्य पूर्वानुमान', labelMr: 'किंमत अंदाज' },
-  { href: '/dashboard/marketplace', icon: ShoppingCart, label: 'Marketplace', labelHi: 'बाज़ार', labelMr: 'बाजारपेठ' },
-  { href: '/dashboard/weather', icon: CloudSun, label: 'Weather', labelHi: 'मौसम', labelMr: 'हवामान' },
-  { href: '/dashboard/advisories', icon: BookOpen, label: 'Farming Tips', labelHi: 'खेती की सलाह', labelMr: 'शेती टिप्स' },
+  { href: '/dashboard', icon: LayoutDashboard, tKey: 'dashboard', fallback: 'Dashboard' },
+  { href: '/dashboard/farm', icon: Leaf, tKey: 'cropTracker', fallback: 'Crop Tracker' },
+  { href: '/dashboard/predictions', icon: TrendingUp, tKey: 'priceForecasts', fallback: 'Price Forecasts' },
+  { href: '/dashboard/marketplace', icon: ShoppingCart, tKey: 'marketplace', fallback: 'Marketplace' },
+  { href: '/dashboard/weather', icon: CloudSun, tKey: 'weather', fallback: 'Weather' },
+  { href: '/dashboard/schemes', icon: FileText, tKey: 'govtSchemes', fallback: 'Govt Schemes' },
+  { href: '/dashboard/disease-scanner', icon: Bug, tKey: 'diseaseScanner', fallback: 'Disease Scanner' },
+  { href: '/dashboard/advisories', icon: BookOpen, tKey: 'farmingTips', fallback: 'Farming Tips' },
 ];
-
-function getLabel(item: { label: string; labelHi: string; labelMr: string }, lang: Language) {
-  return lang === 'hi' ? item.labelHi : lang === 'mr' ? item.labelMr : item.label;
-}
 
 /* ─── Dashboard Layout ─── */
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile overlay
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // desktop collapse
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [lang, setLang] = useState<Language>('en');
   const [isMobile, setIsMobile] = useState(false);
+
+  // Sync i18n language when lang context changes
+  useEffect(() => {
+    i18n.changeLanguage(lang);
+  }, [lang]);
 
   // Detect mobile
   useEffect(() => {
@@ -76,7 +85,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const found = [...navItems].find(
       (item) => pathname === item.href
     );
-    return found ? getLabel(found, lang) : lang === 'hi' ? 'डैशबोर्ड' : lang === 'mr' ? 'डॅशबोर्ड' : 'Dashboard';
+    return found ? i18n.t(found.tKey, found.fallback) : i18n.t('dashboard', 'Dashboard');
   })();
 
   const handleSidebarToggle = () => {
@@ -85,6 +94,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     } else {
       setSidebarCollapsed(!sidebarCollapsed);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
   };
 
   return (
@@ -104,13 +118,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="sidebar-brand-text">
               <h1>Agro-Connect</h1>
-              <span>Smart Farming Platform</span>
+              <span>{i18n.t('smartFarming', 'Smart Farming Platform')}</span>
             </div>
           </div>
 
           <nav className="sidebar-nav">
             <div className="sidebar-section-label">
-              {lang === 'hi' ? 'मुख्य' : lang === 'mr' ? 'मुख्य' : 'Main'}
+              {i18n.t('main', 'Main')}
             </div>
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -120,14 +134,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   className={`sidebar-link ${isActive ? 'active' : ''}`}
-                  title={getLabel(item, lang)}
+                  title={i18n.t(item.tKey, item.fallback)}
                 >
                   <Icon size={20} />
-                  <span className="sidebar-link-text">{getLabel(item, lang)}</span>
+                  <span className="sidebar-link-text">{i18n.t(item.tKey, item.fallback)}</span>
                 </Link>
               );
             })}
           </nav>
+
+          {/* Logout Button */}
+          <button
+            className="sidebar-logout"
+            onClick={handleLogout}
+            title={i18n.t('logout', 'Logout')}
+          >
+            <LogOut size={20} />
+            <span className="sidebar-link-text">
+              {i18n.t('logout', 'Logout')}
+            </span>
+          </button>
 
           {/* Sidebar collapse toggle (desktop) */}
           {!isMobile && (

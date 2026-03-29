@@ -57,13 +57,13 @@ export default function CropLifecycleTracker() {
       }}>
         <Sprout size={32} color="var(--color-text-tertiary)" style={{ marginBottom: 12 }} />
         <h4 style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--color-text-secondary)', marginBottom: 6 }}>
-          No Active Crops
+          {t('noActiveCrops', 'No Active Crops')}
         </h4>
         <p style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)', margin: '0 0 16px', lineHeight: 1.5 }}>
-          Add your first crop to track its lifecycle and receive timely recommendations.
+          {t('noActiveCropsDesc', 'Add your first crop to track its lifecycle and receive timely recommendations.')}
         </p>
         <Link href="/dashboard/farm" className="btn btn-sm btn-primary">
-          + Add Crop
+          {t('addCrop', '+ Add Crop')}
         </Link>
       </div>
     );
@@ -74,10 +74,10 @@ export default function CropLifecycleTracker() {
       <div className="card-header" style={{ paddingBottom: 'var(--space-md)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Sprout size={20} color="var(--color-primary)" />
-          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Crop Lifecycle Tracker</h3>
+          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{t('cropLifecycleTracker', 'Crop Lifecycle Tracker')}</h3>
         </div>
         <Link href="/dashboard/farm" className="btn btn-sm btn-ghost">
-          Manage <ChevronRight size={16} />
+          {t('manage', 'Manage')} <ChevronRight size={16} />
         </Link>
       </div>
 
@@ -110,9 +110,9 @@ export default function CropLifecycleTracker() {
               {/* Progress Detail */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 8, fontWeight: 500 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <CalendarDays size={14} /> Day {crop.days_elapsed}
+                  <CalendarDays size={14} /> {t('day', 'Day')} {crop.days_elapsed}
                 </span>
-                <span>{crop.cycle_days} Days Total</span>
+                <span>{crop.cycle_days} {t('daysTotal', 'Days Total')}</span>
               </div>
 
               {/* Progress Bar Container */}

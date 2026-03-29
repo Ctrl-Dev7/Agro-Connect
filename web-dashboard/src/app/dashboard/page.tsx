@@ -77,7 +77,7 @@ export default function DashboardPage() {
       {/* Zone 3 — Farm & Inventory (Placeholder) */}
       <div className="animate-in stagger-3" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="section-header" style={{ marginBottom: 'var(--space-md)' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>🌱 Farm & Inventory</h2>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{t('farmAndInventory', '🌱 Farm & Inventory')}</h2>
         </div>
         <div className="grid-2">
           <CropLifecycleTracker />

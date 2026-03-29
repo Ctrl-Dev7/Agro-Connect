@@ -70,7 +70,7 @@ export default function SellHoldIndicator() {
         </Link>
       </div>
 
-      <div className="grid-2">
+      <div className="grid-3">
         {signals.map((signal) => {
           const isSell = signal.signal_type === 'SELL';
           // Using success color (green) for HOLD since holding means expected profit increase
@@ -113,20 +113,20 @@ export default function SellHoldIndicator() {
                   gap: 4
                 }}>
                   <RefreshCw size={12} />
-                  {signal.confidence_score}% Confidence
+                  {signal.confidence_score}% {t('confidence', 'Confidence')}
                 </div>
               </div>
               
               <div className="card-body" style={{ padding: 'var(--space-lg)' }}>
                 <p style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                   {isSell 
-                    ? `Prices are peaking at ₹${signal.current_price.toLocaleString('en-IN')}/qtl. Expected to drop by ${signal.change_pct}% over the next 7 days in ${signal.mandi_name}.` 
-                    : `Currently ₹${signal.current_price.toLocaleString('en-IN')}/qtl. Expected to rise by ${signal.change_pct}% to ₹${signal.future_price.toLocaleString('en-IN')}/qtl over the next week.`
+                    ? t('sellDesc', 'Prices are peaking at ₹{{price}}/qtl. Expected to drop by {{pct}}% over the next 7 days in {{mandi}}.', { price: signal.current_price.toLocaleString('en-IN'), pct: signal.change_pct, mandi: signal.mandi_name })
+                    : t('holdDesc', 'Currently ₹{{price}}/qtl. Expected to rise by {{pct}}% to ₹{{future}}/qtl over the next week.', { price: signal.current_price.toLocaleString('en-IN'), pct: signal.change_pct, future: signal.future_price.toLocaleString('en-IN') })
                   }
                 </p>
                 
                 <Link href="/dashboard/predictions" className="btn btn-sm btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
-                  {isSell ? 'List on Marketplace' : 'View Prediction Graph'}
+                  {isSell ? t('listOnMarketplace', 'List on Marketplace') : t('viewPredictionGraph', 'View Prediction Graph')}
                 </Link>
               </div>
             </div>

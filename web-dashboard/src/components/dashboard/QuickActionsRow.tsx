@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { 
   PlusCircle, 
   TrendingUp, 
@@ -11,19 +12,21 @@ import {
 import Link from 'next/link';
 
 export default function QuickActionsRow() {
+  const { t } = useTranslation();
+
   const actions = [
-    { label: '+ Crop', icon: PlusCircle, href: '/dashboard/farm/add-crop', color: 'var(--color-primary)' },
-    { label: 'Market', icon: TrendingUp, href: '/dashboard/market', color: 'var(--color-info)' },
-    { label: 'Scheme', icon: FileText, href: '/dashboard/schemes', color: 'var(--color-warning)' },
-    { label: 'Disease', icon: ScanLine, href: '/dashboard/disease-scanner', color: 'var(--color-danger)' },
-    { label: 'Weather', icon: CloudSun, href: '/dashboard/weather', color: 'var(--color-primary)' },
-    { label: 'Expert', icon: MessagesSquare, href: '/dashboard/forum', color: 'var(--color-success)' },
+    { labelKey: 'qaCrop', fallback: '+ Crop', icon: PlusCircle, href: '/dashboard/farm/add-crop', color: 'var(--color-primary)' },
+    { labelKey: 'qaMarket', fallback: 'Market', icon: TrendingUp, href: '/dashboard/market', color: 'var(--color-info)' },
+    { labelKey: 'qaScheme', fallback: 'Scheme', icon: FileText, href: '/dashboard/schemes', color: 'var(--color-warning)' },
+    { labelKey: 'qaDisease', fallback: 'Disease', icon: ScanLine, href: '/dashboard/disease-scanner', color: 'var(--color-danger)' },
+    { labelKey: 'qaWeather', fallback: 'Weather', icon: CloudSun, href: '/dashboard/weather', color: 'var(--color-primary)' },
+    { labelKey: 'qaExpert', fallback: 'Expert', icon: MessagesSquare, href: '/dashboard/forum', color: 'var(--color-success)' },
   ];
 
   return (
     <div style={{ marginTop: 'var(--space-2xl)' }}>
       <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 'var(--space-md)' }}>
-        Quick Actions
+        {t('quickActions', 'Quick Actions')}
       </h3>
       
       <div style={{
@@ -35,7 +38,7 @@ export default function QuickActionsRow() {
           const IconComponent = act.icon;
           return (
             <Link 
-              key={act.label} 
+              key={act.labelKey} 
               href={act.href}
               className="card"
               style={{
@@ -75,7 +78,7 @@ export default function QuickActionsRow() {
                 color: 'var(--color-text-secondary)',
                 textAlign: 'center'
               }}>
-                {act.label}
+                {t(act.labelKey, act.fallback)}
               </span>
             </Link>
           );

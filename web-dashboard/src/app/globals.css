@@ -189,6 +189,12 @@ img {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   min-height: 74px;
   overflow: hidden;
+  transition: padding var(--transition-base), justify-content var(--transition-base);
+}
+
+.sidebar.collapsed .sidebar-brand {
+  justify-content: center;
+  padding: var(--space-lg) var(--space-sm);
 }
 
 .sidebar-brand-icon {
@@ -314,7 +320,7 @@ img {
 /* Sidebar collapse toggle button */
 .sidebar-collapse-btn {
   position: absolute;
-  bottom: 20px;
+  bottom: 60px;
   right: 14px;
   width: 28px;
   height: 28px;
@@ -338,6 +344,43 @@ img {
 
 .sidebar.collapsed .sidebar-collapse-btn {
   right: 22px;
+}
+
+/* Sidebar logout button */
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  margin: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.65);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  width: calc(100% - var(--space-md));
+}
+
+.sidebar-logout:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.sidebar.collapsed .sidebar-logout {
+  justify-content: center;
+  padding: 10px;
+  width: calc(100% - var(--space-xs));
+  margin: var(--space-xs);
+}
+
+.sidebar.collapsed .sidebar-logout .sidebar-link-text {
+  display: none;
 }
 
 /* Main Content */

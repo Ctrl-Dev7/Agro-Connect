@@ -6,125 +6,49 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 1. Unauthenticated or Dev Mode Fallback
+    // Unauthenticated — return empty
     if (!user) {
-      return NextResponse.json([
-        {
-          order_item_id: 101,
-          buyer_company: 'AgriCorp Procurement Ltd.',
-          crop_name: 'Premium Wheat',
-          quantity: 50,
-          unit: 'Quintal',
-          total_value_inr: 125000,
-          status: 'PENDING',
-          time_ago: '2 hours ago'
-        },
-        {
-          order_item_id: 102,
-          buyer_company: 'Nashik Wholesale Traders',
-          crop_name: 'Red Onion Grade A',
-          quantity: 20,
-          unit: 'Quintal',
-          total_value_inr: 45000,
-          status: 'PENDING',
-          time_ago: '5 hours ago'
-        }
-      ], { status: 200 });
+      return NextResponse.json([], { status: 200 });
     }
 
-    // 2. Fetch active bids from marketplace
-    // seller_user_id on m_listings must match authenticated user
-    // m_orders.payment_status must be 'PENDING'
-    const { data: bids, error } = await supabase
-      .from('m_order_items')
-      .select(`
-        order_item_id,
-        quantity,
-        total_price,
-        m_orders!inner (
-          order_id,
-          payment_status,
-          created_at,
-          u_users (full_name, company_name)
-        ),
-        m_listings!inner (
-          listing_id,
-          seller_user_id,
-          unit_of_measure,
-          c_crops (crop_name_en)
-        )
-      `)
-      .eq('m_listings.seller_user_id', user.id)
-      .eq('m_orders.payment_status', 'PENDING')
-      .order('m_orders(created_at)', { ascending: false });
+    // Fetch this user's ACTIVE listings with crop name
+    const { data: listings, error } = await supabase
+      .from('m_listings')
+      .select('listing_id, item_type, crop_id, equipment_details, quantity, unit_of_measure, listed_price, listing_status, created_at, c_crops(crop_name_en)')
+      .eq('seller_user_id', user.id)
+      .eq('listing_status', 'ACTIVE')
+      .order('created_at', { ascending: false })
+      .limit(5);
 
     if (error) {
-      console.warn('DB Fetch failed (schema mapping missing). Falling back to mock data:', error);
-      // Fallback
-      return NextResponse.json([{
-        order_item_id: 101, buyer_company: 'AgriCorp Procurement Ltd.', crop_name: 'Premium Wheat', quantity: 50, unit: 'Quintal', total_value_inr: 125000, status: 'PENDING', time_ago: '2 hours ago'
-      }, {
-        order_item_id: 102, buyer_company: 'Nashik Wholesale Traders', crop_name: 'Red Onion Grade A', quantity: 20, unit: 'Quintal', total_value_inr: 45000, status: 'PENDING', time_ago: '5 hours ago'
-      }], { status: 200 });
+      console.warn('DB Fetch failed for active listings:', error);
+      return NextResponse.json([], { status: 200 });
     }
 
-    // 3. Process and format data
-    const processedBids = (bids || []).map((bid: any) => {
-      const buyerInfo = bid.m_orders.u_users || {};
-      const cropInfo = bid.m_listings.c_crops || {};
-
+    // Format for the dashboard panel
+    const formatted = (listings || []).map((l: any) => {
+      const cropName = l.c_crops?.crop_name_en || l.equipment_details || 'Farm Produce';
       const now = new Date();
-      const orderDate = new Date(bid.m_orders.created_at);
-      const diffHrs = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60));
-      const timeStr = diffHrs < 1 ? "Just now" : diffHrs < 24 ? String(diffHrs) + " hours ago" : String(Math.floor(diffHrs/24)) + " days ago";
+      const created = new Date(l.created_at);
+      const diffHrs = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60));
+      const timeStr = diffHrs < 1 ? 'Just now' : diffHrs < 24 ? String(diffHrs) + ' hours ago' : String(Math.floor(diffHrs / 24)) + ' days ago';
 
       return {
-        order_item_id: bid.order_item_id,
-        buyer_company: buyerInfo.company_name || buyerInfo.full_name || 'Verified Buyer',
-        crop_name: cropInfo.crop_name_en || 'Farm Produce',
-        quantity: bid.quantity,
-        unit: bid.m_listings.unit_of_measure || 'Quintal',
-        total_value_inr: bid.total_price,
-        status: bid.m_orders.payment_status,
-        time_ago: timeStr
+        listing_id: l.listing_id,
+        crop_name: cropName,
+        quantity: l.quantity,
+        unit: l.unit_of_measure,
+        listed_price: l.listed_price,
+        item_type: l.item_type,
+        status: l.listing_status,
+        time_ago: timeStr,
       };
     });
 
-    // If no real bids exist but the user IS logged in, 
-    // we still return the mocked array below to ensure the UI renders for demo. 
-    // In production, you would return processedBids empty.
-    if (processedBids.length === 0) {
-        return NextResponse.json([
-          {
-            order_item_id: 101,
-            buyer_company: 'AgriCorp Procurement Ltd.',
-            crop_name: 'Premium Wheat',
-            quantity: 50,
-            unit: 'Quintal',
-            total_value_inr: 125000,
-            status: 'PENDING',
-            time_ago: '2 hours ago'
-          },
-          {
-            order_item_id: 102,
-            buyer_company: 'Nashik Wholesale Traders',
-            crop_name: 'Red Onion Grade A',
-            quantity: 20,
-            unit: 'Quintal',
-            total_value_inr: 45000,
-            status: 'PENDING',
-            time_ago: '5 hours ago'
-          }
-        ], { status: 200 });
-    }
-
-    return NextResponse.json(processedBids, { status: 200 });
+    return NextResponse.json(formatted, { status: 200 });
 
   } catch (error) {
-    console.error('Failed to fetch marketplace bids (forced reload):', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+    console.error('Failed to fetch active listings:', error);
+    return NextResponse.json([], { status: 200 });
   }
 }

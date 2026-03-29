@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Trash2,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Listing {
   listing_id: number;
@@ -39,6 +40,7 @@ const EMOJI_MAP: Record<number, string> = {
 };
 
 export default function MarketplacePage() {
+  const { t } = useTranslation();
   const [listings, setListings] = useState<Listing[]>([]);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,8 +64,14 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     (async () => {
+      // Try getUser first, then fall back to session
       const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id ?? null);
+      if (user?.id) {
+        setCurrentUserId(user.id);
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        setCurrentUserId(session?.user?.id ?? null);
+      }
     })();
   }, []);
 
@@ -131,27 +139,45 @@ export default function MarketplacePage() {
            l.item_type.toLowerCase().includes(search.toLowerCase());
   });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!currentUserId) return;
+  async function handleSubmit(e?: any) {
+    if (e?.preventDefault) e.preventDefault();
+    
+    // Last-resort: re-fetch user if it wasn't loaded
+    let userId = currentUserId;
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id ?? null;
+      if (userId) setCurrentUserId(userId);
+    }
+    
+    console.log('[Marketplace] handleSubmit called', { userId, formType, formCropId, formQty, formPrice, formUnit });
+    if (!userId) {
+      console.warn('[Marketplace] No currentUserId — aborting submit');
+      alert('Not logged in. Please refresh and try again.');
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.from('m_listings').insert({
-      seller_user_id: currentUserId,
+      seller_user_id: userId,
       item_type: formType,
       crop_id: formType === 'CROP' ? formCropId : null,
       equipment_details: formType === 'EQUIPMENT' ? formEquipment : null,
       quantity: Number(formQty),
       unit_of_measure: formUnit,
       listed_price: Number(formPrice),
+      listing_status: 'ACTIVE',
     });
     setSubmitting(false);
-    if (!error) {
-      setShowForm(false);
-      setFormQty('');
-      setFormPrice('');
-      setFormEquipment('');
-      loadData();
+    if (error) {
+      console.error('Publish listing error:', error);
+      alert('Failed to publish: ' + error.message);
+      return;
     }
+    setShowForm(false);
+    setFormQty('');
+    setFormPrice('');
+    setFormEquipment('');
+    loadData();
   }
 
   async function markSold(id: number) {
@@ -171,34 +197,34 @@ export default function MarketplacePage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>🛒 Marketplace</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>🛒 {t('marketplace', 'Marketplace')}</h1>
           <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>Buy and sell agricultural products</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Plus size={18} /> Sell Your Produce
+          <Plus size={18} /> {t('sellYourProduce', 'Sell Your Produce')}
         </button>
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '2px solid var(--border-color)' }}>
-        {(['browse', 'mine'] as const).map(t => (
+        {(['browse', 'mine'] as const).map(tabKey => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             style={{
               padding: '10px 24px',
               border: 'none',
               background: 'none',
               cursor: 'pointer',
               fontSize: 14,
-              fontWeight: tab === t ? 700 : 400,
-              color: tab === t ? 'var(--color-primary)' : 'var(--text-secondary)',
-              borderBottom: tab === t ? '2px solid var(--color-primary)' : '2px solid transparent',
+              fontWeight: tab === tabKey ? 700 : 400,
+              color: tab === tabKey ? 'var(--color-primary)' : 'var(--text-secondary)',
+              borderBottom: tab === tabKey ? '2px solid var(--color-primary)' : '2px solid transparent',
               marginBottom: -2,
               transition: 'all 0.2s',
             }}
           >
-            {t === 'browse' ? 'Browse All' : 'My Listings'}
+            {tabKey === 'browse' ? t('browseListings', 'Browse All') : t('myListings', 'My Listings')}
           </button>
         ))}
       </div>
@@ -328,7 +354,7 @@ export default function MarketplacePage() {
         }}>
           <div className="card" style={{ width: '100%', maxWidth: 520, maxHeight: '90vh', overflow: 'auto', padding: 28 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 20 }}>📝 Create Listing</h2>
+              <h2 style={{ margin: 0, fontSize: 20 }}>📝 {t('publishListing', 'Create Listing')}</h2>
               <button 
                 onClick={() => setShowForm(false)} 
                 aria-label="Close modal"
@@ -343,14 +369,14 @@ export default function MarketplacePage() {
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>What are you selling?</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(['CROP', 'EQUIPMENT'] as const).map(t => (
+                  {(['CROP', 'EQUIPMENT'] as const).map(typeKey => (
                     <button
-                      key={t}
+                      key={typeKey}
                       type="button"
-                      onClick={() => setFormType(t)}
-                      className={`btn btn-sm ${formType === t ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setFormType(typeKey)}
+                      className={`btn btn-sm ${formType === typeKey ? 'btn-primary' : 'btn-outline'}`}
                     >
-                      {t === 'CROP' ? '🌾 Crop' : '🔧 Equipment'}
+                      {typeKey === 'CROP' ? '🌾 ' + t('cropType', 'Crop') : '🔧 ' + t('equipmentType', 'Equipment')}
                     </button>
                   ))}
                 </div>
@@ -359,7 +385,7 @@ export default function MarketplacePage() {
               {/* Crop or Equipment */}
               {formType === 'CROP' ? (
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>Select Crop</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>{t('selectCrop', 'Select Crop')}</label>
                   <select
                     value={formCropId}
                     onChange={e => setFormCropId(Number(e.target.value))}
@@ -394,7 +420,7 @@ export default function MarketplacePage() {
 
               {/* Quantity */}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>Quantity</label>
+                <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>{t('quantity', 'Quantity')}</label>
                 <input
                   type="number"
                   value={formQty}
@@ -431,7 +457,7 @@ export default function MarketplacePage() {
 
               {/* Price */}
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>Price (₹ per unit)</label>
+                <label style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>{t('pricePerUnit', 'Price (₹ per unit)')}</label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="number"
@@ -463,12 +489,13 @@ export default function MarketplacePage() {
               </div>
 
               <button
-                type="submit"
+                type="button"
                 className="btn btn-primary"
                 disabled={submitting || !formQty || !formPrice}
-                style={{ marginTop: 8, padding: '12px 0', fontSize: 15, fontWeight: 700 }}
+                onClick={handleSubmit}
+                style={{ marginTop: 8, padding: '12px 0', fontSize: 15, fontWeight: 700, width: '100%', cursor: 'pointer' }}
               >
-                {submitting ? 'Publishing…' : '🚀 Publish Listing'}
+                {submitting ? t('publishing', 'Publishing…') : '🚀 ' + t('publish', 'Publish Listing')}
               </button>
             </form>
           </div>

@@ -5,7 +5,7 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function VoiceAssistant() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isSupported, setIsSupported] = useState<boolean>(true);
   const [isListening, setIsListening] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -24,27 +24,43 @@ export default function VoiceAssistant() {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
     
     // Default language based on their i18n choice
     recognition.lang = i18n.language === 'mr' ? 'mr-IN' : (i18n.language === 'hi' ? 'hi-IN' : 'en-IN');
 
     recognition.onstart = () => {
       setIsListening(true);
-      setTranscriptText('Listening...');
+      const langCode = i18n.language;
+      setTranscriptText(langCode === 'hi' ? 'सुन रहा हूँ...' : langCode === 'mr' ? 'ऐकत आहे...' : 'Listening...');
+      // Auto-timeout after 8 seconds
+      setTimeout(() => {
+        if (recognitionRef.current) {
+          try { recognitionRef.current.stop(); } catch (_) {}
+        }
+      }, 8000);
     };
 
     recognition.onresult = async (event: any) => {
-      const transcript = event.results[0][0].transcript;
+      const result = event.results[event.results.length - 1];
+      const transcript = result[0].transcript;
       setTranscriptText(transcript);
-      setIsListening(false);
-      await processVoiceCommand(transcript);
+      if (result.isFinal) {
+        setIsListening(false);
+        await processVoiceCommand(transcript);
+      }
     };
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
-      setTranscriptText('Could not hear you. Please try again.');
+      const langCode = i18n.language;
+      if (event.error === 'no-speech') {
+        setTranscriptText(langCode === 'hi' ? 'कुछ सुनाई नहीं दिया। कृपया फिर कहें।' : langCode === 'mr' ? 'काहीच ऐकू आले नाही. कृपया पुन्हा बोला.' : 'No speech detected. Please try again.');
+      } else {
+        setTranscriptText(langCode === 'hi' ? 'सुन नहीं पाया। कृपया पुनः प्रयास करें।' : langCode === 'mr' ? 'ऐकता आले नाही. कृपया पुन्हा प्रयत्न करा.' : 'Could not hear you. Please try again.');
+      }
     };
 
     recognition.onend = () => {
@@ -179,7 +195,7 @@ export default function VoiceAssistant() {
           transition: 'all 0.25s ease',
           pointerEvents: 'none'
         }}>
-          {isListening ? '🎙️ Listening...' : '🗣️ Talk to Farm Assistant'}
+          {isListening ? t('listening', '🎙️ Listening...') : t('talkToAssistant', '🗣️ Talk to Farm Assistant')}
         </div>
 
         {/* Floating Action Button */}

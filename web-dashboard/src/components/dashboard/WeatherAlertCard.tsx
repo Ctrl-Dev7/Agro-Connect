@@ -55,7 +55,7 @@ export default function WeatherAlertCard() {
           </h3>
         </div>
         <div className="card-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ color: 'var(--color-text-tertiary)', fontWeight: 600, fontSize: '0.85rem' }}>Loading weather...</div>
+          <div style={{ color: 'var(--color-text-tertiary)', fontWeight: 600, fontSize: '0.85rem' }}>{t('loadingWeather', 'Loading weather...')}</div>
         </div>
       </div>
     );
@@ -73,10 +73,10 @@ export default function WeatherAlertCard() {
       <div className="card-header" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontSize: '0.95rem' }}>
           <CloudSun size={17} color="var(--color-info)" />
-          {t('weatherAlerts', 'Hyper-Local Weather')}
+          {t('hyperLocalWeather', 'Hyper-Local Weather')}
         </h3>
         <Link href="/dashboard/weather" className="btn btn-sm btn-ghost" style={{ fontSize: '0.8rem' }}>
-          Details <ChevronRight size={14} />
+          {t('details', 'Details')} <ChevronRight size={14} />
         </Link>
       </div>
 
@@ -110,21 +110,21 @@ export default function WeatherAlertCard() {
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
             <CloudRain size={16} color="var(--color-primary)" />
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Rain</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{t('rain', 'Rain')}</div>
               <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{data.current.rain_chance}%</div>
             </div>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Wind size={16} color="var(--color-primary)" />
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Wind</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{t('wind', 'Wind')}</div>
               <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{Math.round(data.current.wind)} km/h</div>
             </div>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
             <Droplets size={16} color="var(--color-primary)" />
             <div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Humidity</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{t('humidity', 'Humidity')}</div>
               <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{Math.round(data.current.humidity)}%</div>
             </div>
           </div>
